@@ -106,3 +106,7 @@ DATA_DIR = os.path.join(BASE_DIR, "data", "processed")
 os.makedirs(DATA_DIR, exist_ok=True)
 X.to_csv(os.path.join(DATA_DIR, "X.csv"), index=False)
 y.to_csv(os.path.join(DATA_DIR, "y.csv"), index=False)
+
+import joblib
+
+joblib.dump(X.columns.tolist(), "model_columns.pkl")
