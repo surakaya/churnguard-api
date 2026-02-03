@@ -1,27 +1,103 @@
-from pathlib import Path
+from __future__ import annotations
+
+import logging
 import pickle
+from pathlib import Path
+from typing import Dict, List, Tuple
+
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-X_PATH = BASE_DIR / "data/processed/X.csv"
-Y_PATH = BASE_DIR / "data/processed/y.csv"
-MODEL_PATH = BASE_DIR / "models/logistic_model.pkl"
+DEFAULT_X_PATH = BASE_DIR / "data/processed/X.csv"
+DEFAULT_Y_PATH = BASE_DIR / "data/processed/y.csv"
+DEFAULT_MODEL_PATH = BASE_DIR / "models/logistic_model.pkl"
 
-def train_model():
-    X = pd.read_csv(X_PATH)
-    y = pd.read_csv(Y_PATH).values.ravel()  # 1d array yapıyoruz
+DEFAULT_CLASS_WEIGHT = "balanced"
+DEFAULT_MAX_ITER = 1000
+DEFAULT_SOLVER = "lbfgs"
+DEFAULT_RANDOM_STATE = 42
 
-    scaler = StandardScaler()
+logger = logging.getLogger(__name__)
+
+
+def load_training_data(x_path: Path, y_path: Path) -> Tuple[pd.DataFrame, pd.Series]:
+    if not x_path.exists():
+        raise FileNotFoundError(f"X data not found: {x_path}")
+    if not y_path.exists():
+        raise FileNotFoundError(f"y data not found: {y_path}")
+
+    X = pd.read_csv(x_path)
+    y = pd.read_csv(y_path).iloc[:, 0]
+    return X, y
+
+
+def build_preprocessor() -> StandardScaler:
+    return StandardScaler()
+
+
+def build_model(
+    class_weight: str = DEFAULT_CLASS_WEIGHT,
+    max_iter: int = DEFAULT_MAX_ITER,
+    solver: str = DEFAULT_SOLVER,
+    random_state: int = DEFAULT_RANDOM_STATE,
+) -> LogisticRegression:
+    return LogisticRegression(
+        class_weight=class_weight,
+        max_iter=max_iter,
+        solver=solver,
+        random_state=random_state,
+    )
+
+
+def train_model(
+    x_path: Path = DEFAULT_X_PATH,
+    y_path: Path = DEFAULT_Y_PATH,
+    model_path: Path = DEFAULT_MODEL_PATH,
+    class_weight: str = DEFAULT_CLASS_WEIGHT,
+    max_iter: int = DEFAULT_MAX_ITER,
+    solver: str = DEFAULT_SOLVER,
+    random_state: int = DEFAULT_RANDOM_STATE,
+) -> Tuple[LogisticRegression, StandardScaler, List[str]]:
+    logger.info("Loading training data.")
+    X, y = load_training_data(x_path, y_path)
+
+    logger.info("Building preprocessor and model.")
+    scaler = build_preprocessor()
+    model = build_model(
+        class_weight=class_weight,
+        max_iter=max_iter,
+        solver=solver,
+        random_state=random_state,
+    )
+
+    logger.info("Fitting scaler and model.")
+    feature_names = list(X.columns)
     X_scaled = scaler.fit_transform(X)
-
-    model = LogisticRegression(class_weight="balanced", max_iter=1000)
     model.fit(X_scaled, y)
 
-    # Model ve scaler birlikte kaydediyoruz
-    with open(MODEL_PATH, "wb") as f:
-        pickle.dump((model, scaler), f)
+    logger.info("Saving model artifact.")
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(model_path, "wb") as f:
+        artifact: Dict[str, object] = {
+            "model": model,
+            "scaler": scaler,
+            "feature_names": feature_names,
+        }
+        pickle.dump(artifact, f)
 
-    print("Model ve scaler kaydedildi:", MODEL_PATH)
-    return model, scaler
+    logger.info("Model saved to %s", model_path)
+    return model, scaler, feature_names
+
+
+def configure_logging(level: int = logging.INFO) -> None:
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
+
+if __name__ == "__main__":
+    configure_logging()
+    train_model()
