@@ -1,185 +1,232 @@
-# churnguard-api
+ChurnGuard API
 
-A production-ready machine learning API for predicting customer churn, covering the full lifecycle from data preprocessing to model deployment with Docker.
+Production-ready machine learning API for customer churn prediction.
 
----
+This project demonstrates an end-to-end ML product lifecycle, from data preprocessing and model training to inference, API deployment, and Dockerization.
+It is designed to be CV-grade, realistic, and deployable, not a notebook-only experiment.
 
-## 🚀 Project Overview
+🚀 Project Overview
 
-Customer churn prediction is a critical business problem where the goal is to identify customers who are likely to stop using a service.
+ChurnGuard predicts whether a customer is likely to churn based on their demographic, service usage, and contract information.
 
-This project delivers an **end-to-end churn prediction system**, including:
-- Data preprocessing and feature engineering  
-- Model training and evaluation  
-- Model serialization  
-- Real-time inference via FastAPI  
-- Containerized deployment with Docker  
+The project covers the full pipeline:
 
-This is not a notebook-only experiment — it is a **deployable ML product**.
+Data preprocessing
 
----
+Model training & evaluation
 
-## 🧠 What is Churn?
+Model persistence
 
-**Churn** refers to customers who stop using a company’s product or service.
+Inference logic
 
-Predicting churn enables companies to:
-- Take proactive retention actions  
-- Reduce revenue loss  
-- Optimize marketing and customer success strategies  
+REST API with FastAPI
 
----
+Input validation
 
-## 🧰 Tech Stack
+Error handling
 
-- Python 3.12  
-- scikit-learn  
-- pandas / numpy  
-- FastAPI  
-- Pydantic  
-- Docker  
-- Uvicorn  
+Docker-based deployment
 
----
+This is not a toy project. It is structured as a production-oriented ML service.
 
-## 📊 Data & Feature Engineering
+🧠 What is Churn?
 
-The dataset is preprocessed into numerical features suitable for model inference.
+Customer churn refers to customers who stop using a company’s service.
+Predicting churn allows businesses to:
 
-### Feature Processing
-- Binary categorical variables encoded manually (Yes/No, Male/Female)  
-- Multi-class categorical variables encoded via **one-hot encoding**  
-- All features strictly aligned between training and inference  
+Take preventive actions
 
-### Model Input
-The API expects **fully processed feature vectors**, ensuring:
-- No hidden preprocessing at inference time  
-- Deterministic and reproducible predictions  
-- Clear input schema for production usage  
+Improve customer retention
 
----
+Optimize marketing and pricing strategies
 
-## 🤖 Model
+📊 Dataset
 
-- **Algorithm:** Logistic Regression  
-- **Why Logistic Regression?**
-  - Interpretable coefficients  
-  - Strong baseline for tabular churn problems  
-  - Stable and production-friendly  
-- **Metric:** ROC AUC ≈ **0.85**  
-- **Output:** Churn probability + binary prediction  
+Source: Telco Customer Churn dataset
 
-The trained model is serialized and loaded at API startup.
+Target variable: Churn Value
 
----
+0 → No churn
 
-## 🔌 API Usage
+1 → Churn
 
-### Endpoint
-POST /predict
+Preprocessing Steps
 
+Dropped irrelevant identifier and location columns
 
-### Request Body
-```json
-{
-  "records": [
-    {
-      "Gender": 1,
-      "Senior Citizen": 0,
-      "Partner": 1,
-      "Dependents": 0,
-      "Tenure Months": 12,
-      "Phone Service": 1,
-      "Paperless Billing": 1,
-      "Monthly Charges": 70.5,
-      "Total Charges": 845.3,
-      "CLTV": 5000
-    }
-  ]
-}
+Cleaned numeric fields (e.g. Total Charges)
 
+Binary encoding for Yes/No features
 
-All feature names must exactly match the trained model schema.
+One-hot encoding for categorical variables
 
-Response
-{
-  "probabilities": [0.85],
-  "predictions": [1]
-}
+Feature scaling where appropriate
 
+Processed datasets:
 
-probabilities: churn probability
+data/processed/X.csv
 
-predictions: binary churn prediction
+data/processed/y.csv
 
-⚠️ Validation & Error Handling
+🤖 Model
 
-Request validation via Pydantic
+Algorithm: Logistic Regression
 
-Schema mismatch → 400 Bad Request
+Why Logistic Regression?
 
-Type errors → 422 Unprocessable Entity
+Interpretable coefficients
 
-Robust handling for malformed inputs
+Strong baseline for churn problems
 
-🐳 Docker Deployment
-Build Image
-docker build -t churnguard-api .
+Fast inference
 
-Run Container
-docker run -p 8000:8000 churnguard-api
+Production-friendly behavior
 
-Access API
+Training Details
 
-Swagger UI:
-http://localhost:8000/docs
+Explicit hyperparameters (solver, max_iter, random_state)
 
-🏗️ Project Structure
+Train / validation split
+
+Threshold-based prediction
+
+Evaluation using ROC-AUC
+
+ROC-AUC score is approximately 0.85.
+
+The trained model is persisted as:
+
+models/churn_model.pkl
+
+using joblib for fast loading and reproducible inference inside the API.
+
+🧪 Evaluation Metrics
+
+ROC-AUC
+
+Confusion Matrix
+
+Precision / Recall
+
+Classification Report
+
+The goal is reliability and interpretability, not leaderboard chasing.
+
+🧩 Project Structure
+
 churnguard-api/
+├── app/
+│ ├── main.py
+│ ├── schemas.py
+│ ├── inference.py
+│ └── utils.py
 ├── data/
-│   └── processed/
-│       ├── X.csv
-│       └── y.csv
+│ ├── raw/
+│ └── processed/
+│ ├── X.csv
+│ └── y.csv
 ├── models/
-│   └── logistic_model.pkl
+│ └── churn_model.pkl
 ├── notebooks/
-│   ├── 01_eda.ipynb
-│   └── 02_modeling.ipynb
-├── src/
-│   ├── api.py
-│   ├── train.py
-│   ├── predict.py
-│   ├── schemas.py
+│ └── training.ipynb
 ├── Dockerfile
 ├── requirements.txt
-└── README.md
+├── README.md
+└── .gitignore
 
-✅ Why This Is Production-Level
+🌐 API Design
 
-Clear separation of training and inference
+Built with FastAPI following REST principles.
 
-Deterministic feature schema
+Endpoint
 
-API-based inference
+POST /predict
 
-Containerized deployment
+Example Request
 
-No notebook dependency in production
+{
+"gender": "Female",
+"senior_citizen": 0,
+"partner": "Yes",
+"dependents": "No",
+"tenure_months": 12,
+"internet_service": "Fiber optic",
+"monthly_charges": 89.5,
+"contract": "Month-to-month"
+}
 
-Reproducible build and run steps
+Example Response
 
-📌 Possible Extensions
+{
+"churn_prediction": 1,
+"churn_probability": 0.82
+}
+
+🛡 Input Validation & Error Handling
+
+Strict schema validation with Pydantic
+
+Automatic type checking
+
+Meaningful error messages
+
+Safe model loading and inference
+
+🐳 Docker Deployment
+
+Build the image:
+
+docker build -t churnguard-api .
+
+Run the container:
+
+docker run -p 8000:8000 churnguard-api
+
+API URL:
+
+http://localhost:8000
+
+Swagger UI:
+
+http://localhost:8000/docs
+
+🎯 Project Goals
+
+Demonstrate production-grade ML engineering
+
+Showcase API-first deployment
+
+Reflect real-world ML system design
+
+Serve as a strong portfolio project
+
+🔮 Possible Improvements
 
 Model versioning
 
-Configurable prediction threshold
+Feature store integration
 
-Batch inference endpoint
+Authentication & rate limiting
 
-CI/CD integration
+CI/CD pipeline
 
-Model monitoring
+Monitoring and logging
 
-👤 Author
+Automated retraining
 
-Built as a portfolio-grade machine learning project demonstrating end-to-end ML system design and deployment.
+🧠 Final Notes
+
+This repository represents a complete ML product, not a notebook experiment.
+
+Focus areas for evaluation:
+
+Architecture
+
+Code organization
+
+Deployment readiness
+
+Engineering decisions
+
+Author: Şura Kaya
+Project: ChurnGuard API
