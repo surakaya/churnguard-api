@@ -1,8 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List
 
 
 class CustomerRecord(BaseModel):
+    # Beklenmeyen alan gelirse 422 ile reddet.
+    model_config = ConfigDict(extra="forbid")
+
     Gender: int
     Senior_Citizen: int
     Partner: int
@@ -57,4 +60,7 @@ class CustomerRecord(BaseModel):
 
 
 class PredictionRequest(BaseModel):
-    records: List[CustomerRecord]
+    # Request içinde ek alan olmasın; records boş gelmesin.
+    model_config = ConfigDict(extra="forbid")
+
+    records: List[CustomerRecord] = Field(min_length=1)

@@ -3,3 +3,4 @@ scikit-learn
 numpy
 fastapi
 uvicorn
+pydantic-settings

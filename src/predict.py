@@ -59,6 +59,7 @@ def validate_input_schema(input_df: pd.DataFrame, feature_names: List[str]) -> p
     API'den gelen input'u, modelin eğitildiği feature order ve isimlerine göre
     birebir hizalar.
     """
+    # Beklenen feature seti ile gerçek input seti uyumlu mu kontrol edilir.
     input_cols = set(input_df.columns)
     expected_cols = set(feature_names)
 
